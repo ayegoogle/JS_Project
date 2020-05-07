@@ -1,69 +1,50 @@
-// Function to set up canvas before getting data back form server
-setupCard();
-
 //Anonymous Function
 document.addEventListener("DOMContentLoaded", function () {
   // Method
-  Card.loadCards();
+  getInitalData();
 });
 
 // Watches the addCard form and when it's submitted it will run the addCard function.
 document.getElementById("addCardForm").addEventListener("submit", addCard);
+
+// Persitant things to prevent multiple DOM lookups, global scoped:
+const cardList = document.querySelector("div#card-list");
 
 // Constructor
 class Card {
   constructor(cardData) {
     this.instanceCard = cardData;
   }
-  // prototype function
+  // Public prototype function
   addToPage() {
     // added title and p tag in wrapper
+    // Organized by wrapper a container, then children
     let wrapper = document.createElement("div");
-    let cardTitle = document.createElement("h3");
-    let question = document.createElement("p");
-    let answer = document.createElement("p");
-    let language = document.createElement("p");
-
-    // Created Classes for the above elements
-    // Hide Title and Answer by using 'display=none'
     wrapper.setAttribute("id", "card-item");
-    language.setAttribute("id", "card-language");
-    question.setAttribute("class", "card-question");
-    cardTitle.setAttribute("class", "card-title");
-    answer.setAttribute("class", "card-answer");
-
-    question.innerHTML = this.instanceCard.question;
-    cardTitle.innerHTML = this.instanceCard.title;
-    answer.innerHTML = this.instanceCard.answer;
-
-    // added title and p tag inside wrapper
-    wrapper.appendChild(language);
-    wrapper.appendChild(cardTitle);
-    wrapper.appendChild(question);
-    wrapper.appendChild(answer);
-
-    // grabbed list we wanted to add onto
-    let cardList = document.querySelector("div#card-list");
-
-    // Clear card-list so new data creates a new list of questions and answers
-    // cardList.innerHTML = "";
-    // takes all  cards and renders them to a wrapper named 'card-list'
+    wrapper.appendChild(this.createChildElement("h3", "card-title", this.instanceCard.title));
+    wrapper.appendChild(this.createChildElement("p", "card-question", this.instanceCard.question));
+    wrapper.appendChild(this.createChildElement("p", "card-answer", this.instanceCard.answer));
     cardList.appendChild(wrapper);
   }
-
-  //static class level method loads this site
-  static loadCards() {
-    // get languages array from api
-    fetch("http://localhost:3000/languages")
-      .then(function (response) {
-        return response.json();
-      })
-      .then(function (languages) {
-        // save the language object as global variable
-
-        compileCards(languages);
-      });
+  
+  /** Convenience private function to create a Element */
+  private createChildElement(elementTagName, elementClassName /* needes to be a CSS ClassName*/, innerText) {
+    let elm = document.createElement(elementTagName);
+    elm.setAttribute("class", elementClassName);
+    elm.innerText = innerText;
+    return elm;
   }
+}
+
+function getInitalData() {
+  // get languages array from api
+  fetch("http://localhost:3000/languages")
+    .then(function (response) {
+      return response.json();
+    })
+    .then(function (languages) {
+      compileCards(languages);
+    });
 }
 
 function clearCardList() {
@@ -71,15 +52,11 @@ function clearCardList() {
   cardList.innerHTML = "";
 }
 
-function compileCards(languages) {
-  // let languageList = window.languages;
-  window.languageList = languages;
-  console.log("compiling stuff");
-  // console.log(languages);
+function compileCards(languageList) {
   // create empty array for all cards
   let compiledCards = [];
   // map through each item in the array with 2 params(value and index)
-  languages.map((language, i) => {
+  languageList.map((language, i) => {
     // combine arrays into new array w/o destroying originals
     compiledCards.push(language.cards);
   });
@@ -88,7 +65,6 @@ function compileCards(languages) {
     (a, b) => new Date(b.created_at) - new Date(a.created_at)
   );
   console.log("check sorted", sortedCompiledCards);
-
   setupPage(sortedCompiledCards);
   console.log("checking on array", compiledCards.flat());
 }
